@@ -13,8 +13,12 @@
         }
 
         .announcement-bar {
-            background-color: #4A5D23; color: #F9F6F0; font-size: 0.85em;
-            padding: 8px; text-align: center; letter-spacing: 0.5px; z-index: 1001; position: relative;
+            background-color: #3B4D20; color: #F9F6F0; font-size: 0.9em;
+            padding: 8px 0; text-align: center; letter-spacing: 0.5px; z-index: 1001; position: relative;
+            overflow: hidden; white-space: nowrap;
+        }
+        .announcement-bar marquee {
+            font-weight: 500;
         }
 
         .sticky-header {
@@ -36,30 +40,44 @@
             border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none;
         }
 
-        .categories-bar {
-            display: flex; gap: 25px; padding: 15px 20px; overflow-x: auto;
-            white-space: nowrap; justify-content: center; border-bottom: 1px solid #e0d8d0;
-            background-color: #F9F6F0; scrollbar-width: none;
-        }
-        .categories-bar::-webkit-scrollbar { display: none; }
-        .cat-item { cursor: pointer; font-size: 0.95em; color: #555; transition: 0.2s; }
-        .cat-item:hover, .cat-item.active { color: #1a1a1a; font-weight: bold; border-bottom: 2px solid #1a1a1a; }
-        .cat-sale { color: #d9381e; font-weight: bold; }
-
         .hero-section {
-            width: 100%; height: 60vh;
-            background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200');
+            width: 100%; height: 50vh;
+            background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200');
             background-size: cover; background-position: center;
-            display: flex; align-items: center; justify-content: center; margin-bottom: 40px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 40px;
+            color: #F9F6F0;
+        }
+        .hero-title {
+            font-family: 'Aref Ruqaa', serif; font-size: 3.2em; margin: 0 0 10px 0; color: #F9F6F0;
+            letter-spacing: 1px;
+        }
+        .hero-subtitle {
+            font-size: 1.1em; font-weight: 300; letter-spacing: 2px; opacity: 0.9;
         }
 
-        .products-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 30px; padding: 0 20px 50px 20px; min-height: 200px;}
-        .product-card { width: 300px; cursor: pointer; text-align: center; }
-        .product-image { width: 100%; height: 400px; object-fit: cover; margin-bottom: 10px; border-radius: 2px; }
-        .product-name { font-size: 1.1em; margin: 0 0 5px 0; font-weight: normal; }
-        .product-price { font-size: 1em; color: #1a1a1a; font-weight: bold; margin-bottom: 6px; }
-        .product-colors { display: flex; justify-content: center; gap: 8px; margin-top: 5px; }
-        .color-dot-preview { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
+        .products-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; 
+            padding: 0 15px 50px 15px; 
+            min-height: 200px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .products-grid { gap: 30px; padding: 0 20px 50px 20px; }
+        }
+        .product-card { cursor: pointer; text-align: center; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .product-image { width: 100%; height: 260px; object-fit: cover; margin-bottom: 8px; border-radius: 2px; }
+        @media (min-width: 768px) {
+            .product-image { height: 380px; }
+        }
+        .product-name { font-size: 0.95em; margin: 0 0 5px 0; font-weight: normal; color: #1a1a1a; }
+        @media (min-width: 768px) { .product-name { font-size: 1.1em; } }
+        .product-price { font-size: 0.9em; color: #3B4D20; font-weight: bold; margin-bottom: 6px; }
+        @media (min-width: 768px) { .product-price { font-size: 1em; } }
+        .product-colors { display: flex; justify-content: center; gap: 6px; margin-top: 5px; }
+        .color-dot-preview { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
 
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -79,11 +97,11 @@
 
         .modal-info { width: 50%; padding: 35px 25px; text-align: right; overflow-y: auto; }
         .modal-info h2 { margin-top: 0; font-size: 1.5em; font-weight: normal; }
-        .modal-price { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; }
+        .modal-price { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; color: #3B4D20; }
         .scarcity-text { color: #d9381e; font-size: 0.85em; font-weight: bold; margin-bottom: 15px; display: block; }
         
         .option-header { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 8px 0; }
-        .option-label { font-size: 0.9em; color: #4A5D23; font-weight: bold; }
+        .option-label { font-size: 0.9em; color: #3B4D20; font-weight: bold; }
         .size-guide-link { font-size: 0.8em; color: #555; text-decoration: underline; cursor: pointer; }
         
         .color-selector { display: flex; gap: 10px; }
@@ -109,13 +127,13 @@
         .cart-item-info { text-align: right; flex-grow: 1; }
         .cart-item-name { font-weight: bold; font-size: 0.95em; margin: 0 0 5px 0; }
         .cart-item-details { font-size: 0.85em; color: #555; }
-        .cart-item-price { color: #4A5D23; font-weight: bold; font-size: 0.9em; margin-top: 5px; }
+        .cart-item-price { color: #3B4D20; font-weight: bold; font-size: 0.9em; margin-top: 5px; }
         
         .checkout-form { padding: 20px; background-color: #fff; border-top: 1px solid #e0d8d0; text-align: right; }
         .checkout-form h4 { margin: 0 0 15px 0; font-size: 1em; color: #1a1a1a; }
         .form-input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; font-family: inherit; }
         .cart-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-bottom: 15px; }
-        .checkout-btn { background-color: #4A5D23; color: white; width: 100%; padding: 15px; border: none; font-size: 1em; cursor: pointer; }
+        .checkout-btn { background-color: #3B4D20; color: white; width: 100%; padding: 15px; border: none; font-size: 1em; cursor: pointer; }
 
         .about-section { padding: 50px 20px; text-align: center; max-width: 600px; margin: 0 auto; line-height: 1.8; color: #555; }
         .about-section h3 { color: #1a1a1a; font-size: 1.5em; margin-bottom: 15px; font-weight: normal; }
@@ -134,14 +152,17 @@
             .gallery-container, .modal-info { width: 100%; }
             .main-display-image { height: 320px; }
             .profile-modal-content { width: 90% !important; padding: 20px !important; }
+            .sticky-header { padding: 12px 20px; }
         }
         
-        .loading-text { text-align: center; width: 100%; font-size: 1.2em; color: #4A5D23; padding: 50px; }
+        .loading-text { text-align: center; width: 100%; font-size: 1.2em; color: #3B4D20; padding: 50px; grid-column: span 2; }
     </style>
 </head>
 <body>
 
-    <div class="announcement-bar">شحن مجاني للطلبات داخل دمشق وريفها 🚚</div>
+    <div class="announcement-bar">
+        <marquee behavior="scroll" direction="right" scrollamount="5">متجر رمان يرحب بكم 🌸 | شحن مجاني للطلبات داخل دمشق وريفها 🚚 | تسوقي أحدث التشكيلات العصرية الآن</marquee>
+    </div>
 
     <header class="sticky-header">
         <div class="brand-name">رُمّــان</div>
@@ -154,17 +175,12 @@
         </div>
     </header>
 
-    <div class="categories-bar">
-        <span class="cat-item active">الكل</span>
-        <span class="cat-item">تشكيلة الصيف</span>
-        <span class="cat-item">فساتين</span>
-        <span class="cat-item">أطقم رسمية</span>
-        <span class="cat-item cat-sale">تخفيضات %</span>
+    <div class="hero-section">
+        <h1 class="hero-title">رُمّــان</h1>
+        <div class="hero-subtitle">أناقة تعبر عنكِ</div>
     </div>
-
-    <div class="hero-section"></div>
     
-    <!-- قسم المنتجات فارغ ليتم تعبئته من الجدول -->
+    <!-- قسم المنتجات -->
     <div class="products-grid" id="productsGrid">
         <div class="loading-text">جاري تحميل أحدث التشكيلات...</div>
     </div>
@@ -188,7 +204,7 @@
 
                 <div class="option-header">
                     <span class="option-label">المقاس: <span id="selectedSizeName" style="color:#1a1a1a;"></span></span>
-                    <span class="size-guide-link" onclick="alert('سيتم فتح جدول المقاسات قريباً')">دليل المقاسات</span>
+                    <span class="size-guide-link" onclick="alert('جدول المقاسات القياسي (S, M, L, XL): تختاري مقاسك المعتاد بكل إطمئنان، جميع القطع مصممة بقصة مريحة وأنيقة.')">دليل المقاسات</span>
                 </div>
                 <div class="size-selector" id="modalSizes"></div>
 
@@ -249,7 +265,6 @@
     </div>
 
     <script>
-        // رابط قاعدة البيانات الخاص بك
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztZ3iHqW4Y35a9PC_lf8PS2Qsao3GOV_QGpgs30nEWxMA2EcjCrGADtlRP47OVT9XEEQ/exec";
         
         let productsData = [];
@@ -257,14 +272,13 @@
 
         function formatPrice(num) { return parseInt(num).toLocaleString('ar-SY') + ' ل.س'; }
 
-        // جلب المنتجات من جدول جوجل
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
                 const response = await fetch(SCRIPT_URL + "?action=getProducts");
                 productsData = await response.json();
                 
-                grid.innerHTML = ''; // مسح رسالة التحميل
+                grid.innerHTML = '';
                 
                 if(productsData.length === 0) {
                     grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً.</div>';
@@ -286,7 +300,6 @@
             }
         }
 
-        // تشغيل جلب المنتجات عند فتح الموقع
         window.onload = fetchProducts;
 
         function openProductModal(prod) {
@@ -363,7 +376,6 @@
             }
         }
 
-        // إرسال الطلب إلى جدول جوجل ثم فتح الواتساب
         async function processOrder() {
             const name = document.getElementById('custName').value;
             const phone = document.getElementById('custPhone').value;
@@ -390,7 +402,6 @@
             };
 
             try {
-                // إرسال البيانات للجدول
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -400,23 +411,20 @@
                     })
                 });
 
-                // تجهيز رسالة الواتساب
                 let text = `مرحباً متجر رمان، أود تثبيت الطلبية التالية:\n\n*بيانات العميل:*\nالاسم: ${name}\nالرقم: ${phone}\nالعنوان: ${address}\n\n*تفاصيل الطلب:*\n`;
                 cart.forEach((item, index) => { text += `${index + 1}- ${item.name} | اللون: ${item.color} | المقاس: ${item.size} | السعر: ${formatPrice(item.price)}\n`; });
                 text += `\n*الإجمالي: ${formatPrice(total)}*`;
 
-                // تفريغ السلة بعد نجاح الطلب
                 cart = []; updateCartUI(); closeCart();
                 document.getElementById('custName').value = "";
                 document.getElementById('custPhone').value = "";
                 document.getElementById('custAddress').value = "";
 
-                // تحويل الزبون للواتساب
                 window.open(`https://wa.me/963933115644?text=${encodeURIComponent(text)}`, '_blank');
             } catch (error) {
                 alert("حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.");
             } finally {
-                btn.innerText = "إرسال الطلب (واتساب)";
+                btn.innerText = "إرسال الطلب";
                 btn.disabled = false;
             }
         }

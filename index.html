@@ -40,19 +40,9 @@
             border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none;
         }
 
-        .hero-section {
-            width: 100%; height: 50vh;
-            background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200');
-            background-size: cover; background-position: center;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 40px;
-            color: #F9F6F0;
-        }
-        .hero-title {
-            font-family: 'Aref Ruqaa', serif; font-size: 3.2em; margin: 0 0 10px 0; color: #F9F6F0;
-            letter-spacing: 1px;
-        }
-        .hero-subtitle {
-            font-size: 1.1em; font-weight: 300; letter-spacing: 2px; opacity: 0.9;
+        /* تم حذف قسم الهيرو بناءً على طلبك لتبدأ المنتجات مباشرة */
+        .products-section-title {
+            font-family: 'Aref Ruqaa', serif; font-size: 2.2em; color: #3B4D20; margin: 30px 0 20px 0;
         }
 
         .products-grid { 
@@ -102,8 +92,13 @@
         
         .option-header { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 8px 0; }
         .option-label { font-size: 0.9em; color: #3B4D20; font-weight: bold; }
-        .size-guide-link { font-size: 0.8em; color: #555; text-decoration: underline; cursor: pointer; }
         
+        .size-helper-box {
+            background-color: #f0ece1; padding: 10px 12px; border-radius: 4px; margin-top: 15px;
+            text-align: center; cursor: pointer; border: 1px dashed #3B4D20;
+        }
+        .size-helper-box span { font-size: 0.85em; color: #3B4D20; font-weight: bold; }
+
         .color-selector { display: flex; gap: 10px; }
         .color-dot-choice { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid #ccc; }
         .color-dot-choice.selected { border-color: #1a1a1a; transform: scale(1.1); }
@@ -135,8 +130,11 @@
         .cart-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-bottom: 15px; }
         .checkout-btn { background-color: #3B4D20; color: white; width: 100%; padding: 15px; border: none; font-size: 1em; cursor: pointer; }
 
-        .about-section { padding: 50px 20px; text-align: center; max-width: 600px; margin: 0 auto; line-height: 1.8; color: #555; }
-        .about-section h3 { color: #1a1a1a; font-size: 1.5em; margin-bottom: 15px; font-weight: normal; }
+        /* تعديل لون قسم قصتنا ليكون زيتي أوليفا غامق */
+        .about-section { padding: 50px 20px; text-align: center; max-width: 650px; margin: 0 auto; line-height: 1.8; color: #3B4D20; }
+        .about-section h3 { color: #1a1a1a; font-size: 1.5em; margin-bottom: 15px; font-weight: normal; font-family: 'Aref Ruqaa', serif; }
+        .about-section p { font-size: 1.1em; font-weight: 500; }
+
         .footer { background-color: #1a1a1a; color: #F9F6F0; padding: 40px 20px; font-size: 0.9em; }
         
         .social-icons { margin-top: 20px; display: flex; justify-content: center; gap: 20px; }
@@ -161,7 +159,7 @@
 <body>
 
     <div class="announcement-bar">
-        <marquee behavior="scroll" direction="right" scrollamount="5">متجر رمان يرحب بكم 🌸 | شحن مجاني للطلبات داخل دمشق وريفها 🚚 | تسوقي أحدث التشكيلات العصرية الآن</marquee>
+        <marquee behavior="scroll" direction="right" scrollamount="5">متجر رمان يرحب بكم 🌸 | تسوقي أحدث التشكيلات العصرية الآن</marquee>
     </div>
 
     <header class="sticky-header">
@@ -175,14 +173,11 @@
         </div>
     </header>
 
-    <div class="hero-section">
-        <h1 class="hero-title">رُمّــان</h1>
-        <div class="hero-subtitle">أناقة تعبر عنكِ</div>
-    </div>
+    <div class="products-section-title">تشكيلة رمان الحصرية</div>
     
     <!-- قسم المنتجات -->
     <div class="products-grid" id="productsGrid">
-        <div class="loading-text">جاري تحميل أحدث التشكيلات...</div>
+        <div class="loading-text">جاري تحميل أحدث التشكيلات التركية...</div>
     </div>
 
     <div class="modal" id="productModal">
@@ -204,9 +199,13 @@
 
                 <div class="option-header">
                     <span class="option-label">المقاس: <span id="selectedSizeName" style="color:#1a1a1a;"></span></span>
-                    <span class="size-guide-link" onclick="alert('جدول المقاسات القياسي (S, M, L, XL): تختاري مقاسك المعتاد بكل إطمئنان، جميع القطع مصممة بقصة مريحة وأنيقة.')">دليل المقاسات</span>
                 </div>
                 <div class="size-selector" id="modalSizes"></div>
+
+                <!-- أداة قياس ذكية تفاعلية جديدة -->
+                <div class="size-helper-box" onclick="openSizeHelper()">
+                    <span>💡 هل أنتِ محتارة بمقاسك؟ اضغطي هنا للاستشارة الذكية</span>
+                </div>
 
                 <button class="buy-btn" onclick="addToCart()">إضافة إلى السلة</button>
             </div>
@@ -244,7 +243,7 @@
 
     <div class="about-section">
         <h3>قصتنا</h3>
-        <p>نقدم لكِ في رُمّان تصاميم عصرية تجمع بين الرقي والبساطة. نختار الأقمشة بعناية فائقة لنضمن لكِ إطلالة مريحة وفخمة تبرز جمالك في كل تفصيل. اكتشفي مجموعتنا وكوني دائماً متألقة.</p>
+        <p>نقدم لكِ في رُمّان أرقى التصاميم التركية العصرية التي تجمع بين الرقي والبساطة لنضمن لكِ إطلالة مريحة وفخمة تبرز جمالك في كل تفصيل.</p>
     </div>
 
     <div class="footer">
@@ -269,6 +268,7 @@
         
         let productsData = [];
         let currentProduct = null, selectedVariant = null, chosenSize = "", cart = [];
+        let userMeasurements = ""; // لتخزين ملاحظة المقاس الذكي
 
         function formatPrice(num) { return parseInt(num).toLocaleString('ar-SY') + ' ل.س'; }
 
@@ -305,6 +305,7 @@
         function openProductModal(prod) {
             currentProduct = prod; document.getElementById('modalTitle').innerText = prod.name;
             document.getElementById('modalPrice').innerText = formatPrice(prod.price);
+            userMeasurements = ""; // إعادة تعيين القياسات عند فتح منتج جديد
             
             const colorsContainer = document.getElementById('modalColors'); colorsContainer.innerHTML = '';
             prod.variants.forEach((v, index) => {
@@ -340,6 +341,32 @@
             });
         }
 
+        // دالة مساعد القياس الذكي التفاعلي
+        function openSizeHelper() {
+            let weight = prompt("أدخلي وزندك التقريبي (كغ):");
+            if (!weight) return;
+            let height = prompt("أدخلي طولك التقريبي (سم):");
+            if (!height) return;
+
+            let suggested = "M";
+            let w = parseInt(weight);
+            if (w < 55) suggested = "S";
+            else if (w >= 55 && w <= 65) suggested = "M";
+            else if (w >= 66 && w <= 75) suggested = "L";
+            else suggested = "XL";
+
+            userMeasurements = `[وزن: ${weight}كغ، طول: ${height}سم - المقاس المقترح: ${suggested}]`;
+            alert(`بناءً على طولك ووزنك، المقاس الأنسب لكِ هو: (${suggested}) ✨\nتم إرفاق هذه التفاصيل مع طلبك تلقائياً.`);
+            
+            // اختيار المقاس المقترح تلقائياً
+            const sizeBtns = document.querySelectorAll('.size-btn');
+            sizeBtns.forEach(btn => {
+                if (btn.innerText.trim() === suggested) {
+                    btn.click();
+                }
+            });
+        }
+
         function closeModal() { document.getElementById('productModal').style.display = 'none'; }
         function openCart() { document.getElementById('cartSidebar').classList.add('open'); }
         function closeCart() { document.getElementById('cartSidebar').classList.remove('open'); }
@@ -348,7 +375,8 @@
 
         function addToCart() {
             if (!chosenSize) { alert("يرجى اختيار المقاس لتتمكني من الإضافة للسلة!"); return; }
-            cart.push({ name: currentProduct.name, price: parseInt(currentProduct.price), color: selectedVariant.colorName, size: chosenSize, image: selectedVariant.images[0] });
+            let finalSize = chosenSize + (userMeasurements ? " " + userMeasurements : "");
+            cart.push({ name: currentProduct.name, price: parseInt(currentProduct.price), color: selectedVariant.colorName, size: finalSize, image: selectedVariant.images[0] });
             updateCartUI(); closeModal(); openCart();
         }
 
@@ -390,7 +418,7 @@
             btn.innerText = "جاري تسجيل الطلب...";
             btn.disabled = true;
 
-            let itemsDetails = cart.map(item => `${item.name} (${item.color} - مقاس ${item.size})`).join(' + ');
+            let itemsDetails = cart.map(item => `${item.name} (${item.color} - مقاس: ${item.size})`).join(' + ');
             let total = cart.reduce((sum, item) => sum + item.price, 0);
 
             const orderData = {

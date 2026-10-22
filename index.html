@@ -40,7 +40,6 @@
             border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none;
         }
 
-        /* تم حذف قسم الهيرو بناءً على طلبك لتبدأ المنتجات مباشرة */
         .products-section-title {
             font-family: 'Aref Ruqaa', serif; font-size: 2.2em; color: #3B4D20; margin: 30px 0 20px 0;
         }
@@ -130,7 +129,6 @@
         .cart-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-bottom: 15px; }
         .checkout-btn { background-color: #3B4D20; color: white; width: 100%; padding: 15px; border: none; font-size: 1em; cursor: pointer; }
 
-        /* تعديل لون قسم قصتنا ليكون زيتي أوليفا غامق */
         .about-section { padding: 50px 20px; text-align: center; max-width: 650px; margin: 0 auto; line-height: 1.8; color: #3B4D20; }
         .about-section h3 { color: #1a1a1a; font-size: 1.5em; margin-bottom: 15px; font-weight: normal; font-family: 'Aref Ruqaa', serif; }
         .about-section p { font-size: 1.1em; font-weight: 500; }
@@ -202,7 +200,6 @@
                 </div>
                 <div class="size-selector" id="modalSizes"></div>
 
-                <!-- أداة قياس ذكية تفاعلية جديدة -->
                 <div class="size-helper-box" onclick="openSizeHelper()">
                     <span>💡 هل أنتِ محتارة بمقاسك؟ اضغطي هنا للاستشارة الذكية</span>
                 </div>
@@ -268,7 +265,7 @@
         
         let productsData = [];
         let currentProduct = null, selectedVariant = null, chosenSize = "", cart = [];
-        let userMeasurements = ""; // لتخزين ملاحظة المقاس الذكي
+        let userMeasurements = "";
 
         function formatPrice(num) { return parseInt(num).toLocaleString('ar-SY') + ' ل.س'; }
 
@@ -305,7 +302,7 @@
         function openProductModal(prod) {
             currentProduct = prod; document.getElementById('modalTitle').innerText = prod.name;
             document.getElementById('modalPrice').innerText = formatPrice(prod.price);
-            userMeasurements = ""; // إعادة تعيين القياسات عند فتح منتج جديد
+            userMeasurements = "";
             
             const colorsContainer = document.getElementById('modalColors'); colorsContainer.innerHTML = '';
             prod.variants.forEach((v, index) => {
@@ -341,9 +338,8 @@
             });
         }
 
-        // دالة مساعد القياس الذكي التفاعلي
         function openSizeHelper() {
-            let weight = prompt("أدخلي وزندك التقريبي (كغ):");
+            let weight = prompt("أدخلي وزنك التقريبي (كغ):");
             if (!weight) return;
             let height = prompt("أدخلي طولك التقريبي (سم):");
             if (!height) return;
@@ -358,7 +354,6 @@
             userMeasurements = `[وزن: ${weight}كغ، طول: ${height}سم - المقاس المقترح: ${suggested}]`;
             alert(`بناءً على طولك ووزنك، المقاس الأنسب لكِ هو: (${suggested}) ✨\nتم إرفاق هذه التفاصيل مع طلبك تلقائياً.`);
             
-            // اختيار المقاس المقترح تلقائياً
             const sizeBtns = document.querySelectorAll('.size-btn');
             sizeBtns.forEach(btn => {
                 if (btn.innerText.trim() === suggested) {

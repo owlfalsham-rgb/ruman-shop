@@ -38,14 +38,12 @@
             border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none;
         }
 
-        /* زر تسجيل دخول عادي وخالي من أي كلمات لفت انتباه */
         .admin-login-btn {
             background: none; border: 1px solid #ccc; color: #555; padding: 5px 12px;
             border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: normal; margin-left: 10px;
         }
         .admin-login-btn:hover { background-color: #f0ece1; color: #1a1a1a; }
 
-        /* لوحة الإدارة */
         #adminPanel {
             background: #fff; max-width: 850px; margin: 20px auto 10px auto; padding: 25px;
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: right; display: none; border: 1px solid #3B4D20;
@@ -205,7 +203,6 @@
     <header class="sticky-header">
         <div class="brand-name">رُمّــان</div>
         <div class="header-icons">
-            <!-- زر تسجيل دخول عادي لا يلفت الانتباه -->
             <button class="admin-login-btn" onclick="promptAdminLogin()">تسجيل دخول</button>
             <div class="cart-icon-wrapper" onclick="openCart()">
                 <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -215,7 +212,6 @@
         </div>
     </header>
 
-    <!-- لوحة الإدارة -->
     <div id="adminPanel">
         <h2 id="adminPanelTitle">إضافة منتج جديد</h2>
         <input type="hidden" id="editingProductId" value="">
@@ -357,6 +353,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('rumman_admin_logged') === 'true') {
                 isAdminLoggedIn = true;
+                document.getElementById('adminPanel').style.display = 'block';
             }
             fetchProducts();
         });

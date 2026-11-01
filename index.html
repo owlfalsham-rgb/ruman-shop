@@ -99,11 +99,6 @@
         
         .product-colors { display: flex; justify-content: center; gap: 6px; }
         .color-dot-preview { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
-        
-        .card-actions-admin { position: absolute; top: 10px; left: 10px; display: flex; gap: 5px; display: none; z-index: 10; }
-        .product-card:hover .card-actions-admin { display: flex; }
-        .btn-edit-product { background: #3B4D20; color: white; border: none; padding: 5px 8px; font-size: 0.75em; border-radius: 3px; cursor: pointer; }
-        .btn-delete-product { background: #d9381e; color: white; border: none; padding: 5px 8px; font-size: 0.75em; border-radius: 3px; cursor: pointer; }
 
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -213,15 +208,18 @@
     </header>
 
     <div id="adminPanel">
-        <h2 id="adminPanelTitle">إضافة منتج جديد</h2>
-        <input type="hidden" id="editingProductId" value="">
+        <h2>إضافة منتج جديد والمخزون</h2>
         <div class="admin-form-grid">
             <div class="admin-group">
                 <label>اسم القطعة:</label>
                 <input type="text" id="adminName" placeholder="مثال: فستان تركي مخملي">
             </div>
             <div class="admin-group">
-                <label>السعر (ل.س):</label>
+                <label>سعر الجملة (ل.س):</label>
+                <input type="number" id="adminWholesalePrice" placeholder="مثال: 50000">
+            </div>
+            <div class="admin-group">
+                <label>سعر المبيع (ل.س):</label>
                 <input type="number" id="adminPrice" placeholder="مثال: 75000">
             </div>
             <div class="admin-group">
@@ -382,10 +380,8 @@
         }
 
         function resetAdminForm() {
-            document.getElementById('adminPanelTitle').innerText = "إضافة منتج جديد";
-            document.getElementById('saveProductBtn').innerText = "إضافة المنتج إلى المتجر";
-            document.getElementById('editingProductId').value = "";
             document.getElementById('adminName').value = "";
+            document.getElementById('adminWholesalePrice').value = "";
             document.getElementById('adminPrice').value = "";
             document.getElementById('adminColorName').value = "";
             document.getElementById('adminImageFiles').value = "";
@@ -419,9 +415,9 @@
             }
         }
 
-        // حفظ وحقن المنتج مباشرة في Google Sheets
         async function saveProductLocally() {
             const name = document.getElementById('adminName').value.trim();
+            const wholesalePrice = document.getElementById('adminWholesalePrice').value.trim();
             const price = document.getElementById('adminPrice').value.trim();
             const colorName = document.getElementById('adminColorName').value.trim() || 'أساسي';
 
@@ -434,8 +430,8 @@
                 }
             });
 
-            if (!name || !price) {
-                alert("يرجى إدخال اسم المنتج والسعر على الأقل!");
+            if (!name || !price || !wholesalePrice) {
+                alert("يرجى إدخال اسم القطعة، سعر الجملة، وسعر المبيع!");
                 return;
             }
 
@@ -445,11 +441,12 @@
             }
 
             const btn = document.getElementById('saveProductBtn');
-            btn.innerText = "جاري حفظ وحقن المنتج في السحاب...";
+            btn.innerText = "جاري حفظ المنتج وإرساله إلى جوجل شيت...";
             btn.disabled = true;
 
             const productData = {
                 name: name,
+                wholesalePrice: wholesalePrice,
                 price: price,
                 colorName: colorName,
                 sizesStock: sizesStockObj,
@@ -468,14 +465,14 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    alert("تمت إضافة المنتج وحقنه في جوجل شيت بنجاح لجميع الزبائن! 🌸");
+                    alert("تمت إضافة المنتج وترتيبه في الشيتس بنجاح! 🌸");
                     resetAdminForm();
                     fetchProducts();
                 } else {
                     alert("حدث خطأ أثناء الحفظ: " + (result.error || "خطأ غير معروف"));
                 }
             } catch (error) {
-                alert("حدث خطأ في الاتصال بالاتصال بالسيرفر السحابي.");
+                alert("حدث خطأ في الاتصال بالسيفر السحابي.");
             } finally {
                 btn.innerText = "إضافة المنتج إلى المتجر";
                 btn.disabled = false;
@@ -690,7 +687,7 @@
                 return;
             }
 
-            btn.innerText = "جاري تسجيل الطلب وإرساله...";
+            btn.innerText = "جاري تسجيل الطلب وتحديث لوحة الأرباح...";
             btn.disabled = true;
 
             let itemsDetails = cart.map(item => `${item.name} (${item.color} - مقاس: ${item.sizeFormatted})`).join(' + ');

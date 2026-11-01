@@ -524,27 +524,27 @@
             }
         }
 
-        // جلب المنتجات: الاعتماد الأساسي على المخزن المحلي لضمان ظهور إضافاتك فوراً
+        // قراءة المنتجات حصراً من المخزن المحلي أولاً لضمان ظهور الإضافات فوراً
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
+                const localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
+                
                 let remoteProducts = [];
                 try {
                     const response = await fetch(SCRIPT_URL + "?action=getProducts");
                     remoteProducts = await response.json();
                 } catch (e) {
-                    console.log("الاعتماد على التخزين المحلي.");
+                    console.log("الاعتماد على الذاكرة المحلية فقط.");
                 }
 
-                const localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-                
-                // دمج المنتجات (المحلية تظهر أولاً وبشكل مؤكد)
+                // دمج المنتجات، بحيث يكون العرض المحلي أولاً دائماً
                 productsData = [...localProducts, ...remoteProducts];
                 
                 grid.innerHTML = '';
                 
                 if(productsData.length === 0) {
-                    grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً. استخدم لوحة التحكم لإضافة منتجك الأول.</div>';
+                    grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً. افتح لوحة التحكم لإضافة أول قطعة.</div>';
                     return;
                 }
 

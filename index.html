@@ -329,7 +329,8 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxet1pT_Q2dVE6wqWMK8I6RVikeXh7K1zbK-OpuWGMrukaEtZQIkYHD8IiB86UmlG4K/exec";
+        // تم تحديث رابط الويب أب الجديد هنا
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTsD28L4-9J8rr46l2qQYwS_vWxpDi-Trhqda34d34AI0QLBkDfNgYFjxYxPFt2wLAmw/exec";
         
         let productsData = [];
         let currentProduct = null, chosenSize = "", cart = [];
@@ -488,7 +489,9 @@
                     const card = document.createElement('div'); card.className = 'product-card';
                     card.onclick = () => openProductModal(prod);
                     
-                    card.innerHTML = `<img src="${prod.variants[0].images[0]}" class="product-image">
+                    let imageSrc = prod.variants[0] && prod.variants[0].images.length > 0 ? prod.variants[0].images[0] : "";
+                    
+                    card.innerHTML = `<img src="${imageSrc}" class="product-image">
                                         <div class="product-info-box">
                                             <h3 class="product-name">${prod.name}</h3>
                                             <div class="product-price">${formatPrice(prod.price)}</div>
@@ -515,7 +518,7 @@
 
             if (slideshowInterval) clearInterval(slideshowInterval);
 
-            if(variant.images && variant.images.length > 0) {
+            if(variant && variant.images && variant.images.length > 0) {
                 mainImg.src = variant.images[0];
                 
                 if(variant.images.length > 1) {
@@ -548,8 +551,8 @@
             }
 
             const sizesContainer = document.getElementById('modalSizes'); sizesContainer.innerHTML = '';
-            let stockMap = variant.sizesStock || {};
-            if (Object.keys(stockMap).length === 0 && variant.sizes) {
+            let stockMap = (variant && variant.sizesStock) || {};
+            if (Object.keys(stockMap).length === 0 && variant && variant.sizes) {
                 variant.sizes.forEach(s => stockMap[s] = 5);
             }
 
@@ -615,15 +618,23 @@
         function addToCart() {
             if (!chosenSize) { alert("يرجى اختيار المقاس لتتمكني من الإضافة للسلة!"); return; }
             let finalSize = chosenSize + (userMeasurements ? " " + userMeasurements : "");
+            
+            let colorName = "أساسي";
+            let imageSrc = "";
+            if(currentProduct.variants && currentProduct.variants.length > 0) {
+                colorName = currentProduct.variants[0].colorName || "أساسي";
+                imageSrc = currentProduct.variants[0].images && currentProduct.variants[0].images.length > 0 ? currentProduct.variants[0].images[0] : "";
+            }
+            
             cart.push({ 
                 productId: currentProduct.id,
-                variantColor: currentProduct.variants[0].colorName || "أساسي",
+                variantColor: colorName,
                 size: chosenSize,
                 name: currentProduct.name, 
                 price: parseInt(currentProduct.price), 
-                color: currentProduct.variants[0].colorName || "أساسي", 
+                color: colorName, 
                 sizeFormatted: finalSize, 
-                image: currentProduct.variants[0].images[0] 
+                image: imageSrc 
             });
             updateCartUI(); closeModal(); openCart();
         }

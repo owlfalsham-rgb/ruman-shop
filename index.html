@@ -21,7 +21,7 @@
 
         .sticky-header {
             position: sticky; top: 0; width: 100%; background-color: rgba(249, 246, 240, 0.95);
-            transition: 0.3s ease; display: flex; justify-content: flex-end; align-items: center;
+            transition: 0.3s ease; display: flex; justify-content: space-between; align-items: center;
             padding: 15px 40px; box-sizing: border-box; z-index: 1000; border-bottom: 1px solid #e0d8d0;
         }
         .brand-name {
@@ -38,14 +38,12 @@
             border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none;
         }
 
-        /* زر تسجيل الدخول مخفي ومرتب بأقصى اليمين بدون تأثير على اسم المتجر */
         .admin-login-btn {
             background: none; border: 1px solid #ccc; color: #555; padding: 5px 10px;
             border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-right: 10px;
         }
         .admin-login-btn:hover { background-color: #f0ece1; color: #1a1a1a; }
 
-        /* لوحة الإدارة */
         #adminPanel {
             background: #fff; max-width: 850px; margin: 20px auto 10px auto; padding: 25px;
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: right; display: none; border: 1px solid #3B4D20;
@@ -190,7 +188,7 @@
             .gallery-container, .modal-info { width: 100%; }
             .main-display-image { height: 300px; }
             .profile-modal-content { width: 90% !important; padding: 20px !important; }
-            .sticky-header { padding: 12px 20px; justify-content: space-between; }
+            .sticky-header { padding: 15px 20px; justify-content: space-between; }
         }
         
         .loading-text { text-align: center; width: 100%; font-size: 1.2em; color: #3B4D20; padding: 50px; grid-column: span 2; }
@@ -202,7 +200,6 @@
         <marquee behavior="scroll" direction="right" scrollamount="5">متجر رمان يرحب بكم 🌸 | تسوقي أحدث التشكيلات العصرية الآن</marquee>
     </div>
 
-    <!-- الهيدر المرتب: اسم المتجر بالمنتصف تماماً وأيقونات التحكم بأقصى اليمين بعيدة عنه -->
     <header class="sticky-header">
         <button class="admin-login-btn" onclick="promptAdminLogin()">تسجيل دخول</button>
         <div class="brand-name">رُمّــان</div>
@@ -353,7 +350,6 @@
 
         function formatPrice(num) { return parseInt(num).toLocaleString('ar-SY') + ' ل.س'; }
 
-        // التحقق من حالة تسجيل الدخول عند فتح الصفحة
         window.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('rumman_admin_logged') === 'true') {
                 isAdminLoggedIn = true;
@@ -528,7 +524,7 @@
             }
         }
 
-        // دالة جلب وعرض المنتجات (تعتمد حصراً وابتداءً على اللوحة المحلية لتظهر للجميع فوراً)
+        // جلب المنتجات: الاعتماد الأساسي على المخزن المحلي لضمان ظهور إضافاتك فوراً
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
@@ -541,13 +537,14 @@
                 }
 
                 const localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-                // دمج المنتجات بحيث تظهر المنتجات المضافة محلياً (من لوحة التحكم) أولاً للجميع
+                
+                // دمج المنتجات (المحلية تظهر أولاً وبشكل مؤكد)
                 productsData = [...localProducts, ...remoteProducts];
                 
                 grid.innerHTML = '';
                 
                 if(productsData.length === 0) {
-                    grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً.</div>';
+                    grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً. استخدم لوحة التحكم لإضافة منتجك الأول.</div>';
                     return;
                 }
 

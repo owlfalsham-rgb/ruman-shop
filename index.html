@@ -329,8 +329,8 @@
     </div>
 
     <script>
-        // تم تحديث رابط الويب أب الجديد هنا
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTsD28L4-9J8rr46l2qQYwS_vWxpDi-Trhqda34d34AI0QLBkDfNgYFjxYxPFt2wLAmw/exec";
+        // تم تحديث الرابط الجديد هنا بدقة
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3UAN_dMEBYelahCfWm7kVkbPGEuJGcBQTdb2vj6dIBgkPajWsuHpekSb0Bu2tlyEjRA/exec";
         
         let productsData = [];
         let currentProduct = null, chosenSize = "", cart = [];
@@ -386,6 +386,7 @@
             });
         }
 
+        // التعديل الجذري والذكي: ضغط وضبط الصور تلقائياً لتتوافق تماماً مع الشيت وتظهر فوراً
         function handleImageUpload() {
             const fileInput = document.getElementById('adminImageFiles');
             const previewRow = document.getElementById('imagesPreviewRow');
@@ -398,10 +399,35 @@
                     const file = files[i];
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        uploadedImagesBase64.push(e.target.result);
-                        const img = document.createElement('img');
-                        img.src = e.target.result; img.className = 'preview-thumb'; img.style.display = 'block';
-                        previewRow.appendChild(img);
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 500; // تصغير العرض لتخفيف الحجم وبقاء الكود مقبولاً للشيتس
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > MAX_WIDTH) {
+                                height = height * (MAX_WIDTH / width);
+                                width = MAX_WIDTH;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // تحويل الصورة لكود Base64 مضغوط ونظيف بجودة 60%
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                            
+                            uploadedImagesBase64.push(compressedDataUrl);
+                            
+                            const previewImg = document.createElement('img');
+                            previewImg.src = compressedDataUrl; 
+                            previewImg.className = 'preview-thumb'; 
+                            previewImg.style.display = 'block';
+                            previewRow.appendChild(previewImg);
+                        };
+                        img.src = e.target.result;
                     }
                     reader.readAsDataURL(file);
                 }
@@ -475,7 +501,7 @@
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
-                const response = await fetch(SCRIPT_URL + "?action=getProducts");
+                const response = await fetch(SCRIPT_URL + "?action=getProducts&t=" + new Date().getTime());
                 productsData = await response.json();
                 
                 grid.innerHTML = '';

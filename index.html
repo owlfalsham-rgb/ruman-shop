@@ -329,7 +329,6 @@
     </div>
 
     <script>
-        // تم تحديث الرابط الجديد هنا بدقة
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3UAN_dMEBYelahCfWm7kVkbPGEuJGcBQTdb2vj6dIBgkPajWsuHpekSb0Bu2tlyEjRA/exec";
         
         let productsData = [];
@@ -386,7 +385,6 @@
             });
         }
 
-        // التعديل الجذري والذكي: ضغط وضبط الصور تلقائياً لتتوافق تماماً مع الشيت وتظهر فوراً
         function handleImageUpload() {
             const fileInput = document.getElementById('adminImageFiles');
             const previewRow = document.getElementById('imagesPreviewRow');
@@ -402,7 +400,7 @@
                         const img = new Image();
                         img.onload = function() {
                             const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 500; // تصغير العرض لتخفيف الحجم وبقاء الكود مقبولاً للشيتس
+                            const MAX_WIDTH = 500;
                             let width = img.width;
                             let height = img.height;
                             
@@ -416,9 +414,7 @@
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             
-                            // تحويل الصورة لكود Base64 مضغوط ونظيف بجودة 60%
                             const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                            
                             uploadedImagesBase64.push(compressedDataUrl);
                             
                             const previewImg = document.createElement('img');

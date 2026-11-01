@@ -21,7 +21,7 @@
 
         .sticky-header {
             position: sticky; top: 0; width: 100%; background-color: rgba(249, 246, 240, 0.95);
-            transition: 0.3s ease; display: flex; justify-content: flex-end; align-items: center;
+            transition: 0.3s ease; display: flex; justify-content: space-between; align-items: center;
             padding: 15px 40px; box-sizing: border-box; z-index: 1000; border-bottom: 1px solid #e0d8d0;
         }
         .brand-name {
@@ -38,7 +38,6 @@
             border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none;
         }
 
-        /* لوحة الإدارة */
         #adminPanel {
             background: #fff; max-width: 850px; margin: 20px auto 10px auto; padding: 25px;
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: right; display: none; border: 1px solid #3B4D20;
@@ -206,7 +205,6 @@
         </div>
     </header>
 
-    <!-- لوحة الإدارة المخفية (تفتح فقط عبر إضافة ?admin=1 للرابط) -->
     <div id="adminPanel">
         <h2 id="adminPanelTitle">إضافة منتج جديد</h2>
         <input type="hidden" id="editingProductId" value="">
@@ -247,7 +245,6 @@
 
     <div class="products-section-title">تشكيلة رمان الحصرية</div>
     
-    <!-- قسم المنتجات -->
     <div class="products-grid" id="productsGrid">
         <div class="loading-text">جاري تحميل أحدث التشكيلات التركية...</div>
     </div>
@@ -613,4 +610,177 @@
             }
 
             const sizesContainer = document.getElementById('modalSizes'); sizesContainer.innerHTML = '';
-            let stockMap = variant.
+            let stockMap = variant.sizesStock || {};
+            if (Object.keys(stockMap).length === 0 && variant.sizes) {
+                variant.sizes.forEach(s => stockMap[s] = 5);
+            }
+
+            Object.keys(stockMap).forEach(size => {
+                let qty = stockMap[size];
+                const btn = document.createElement('button');
+                btn.className = 'size-btn' + (qty <= 0 ? ' sold-out' : '');
+                btn.innerHTML = `${size} <span>(${qty} متوفر)</span>`;
+
+                if (qty > 0) {
+                    btn.onclick = () => { 
+                        chosenSize = size; 
+                        document.getElementById('selectedSizeName').innerText = `${size} (متبقي ${qty} قطع)`; 
+                        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected')); 
+                        btn.classList.add('selected'); 
+                    };
+                } else {
+                    btn.onclick = () => alert("عذراً، هذا المقاس نفد من المخزون حالياً.");
+                }
+                sizesContainer.appendChild(btn);
+            });
+        }
+
+        function openSizeHelper() {
+            let weight = prompt("أدخلي وزنك التقريبي (كغ):");
+            if (!weight) return;
+            let height = prompt("أدخلي طولك التقريبي (سم):");
+            if (!height) return;
+
+            let suggested = "M";
+            let w = parseInt(weight);
+            if (w < 55) suggested = "S";
+            else if (w >= 55 && w <= 65) suggested = "M";
+            else if (w >= 66 && w <= 75) suggested = "L";
+            else suggested = "XL";
+
+            userMeasurements = `[وزن: ${weight}كغ، طول: ${height}سم - المقاس المقترح: ${suggested}]`;
+            alert(`بناءً على طولك ووزنك، المقاس الأنسب لكِ هو: (${suggested}) ✨`);
+            
+            const sizeBtns = document.querySelectorAll('.size-btn');
+            sizeBtns.forEach(btn => {
+                if (btn.innerText.includes(suggested) && !btn.classList.contains('sold-out')) {
+                    btn.click();
+                }
+            });
+        }
+
+        function checkModalClose(event) { if (event.target.id === 'productModal') closeModal(); }
+        function checkProfileClose(event) { if (event.target.id === 'profileModal') closeProfile(); }
+
+        function closeModal() { 
+            if (slideshowInterval) clearInterval(slideshowInterval);
+            document.getElementById('productModal').style.display = 'none'; 
+        }
+
+        function openCart() { document.getElementById('cartSidebar').classList.add('open'); }
+        function closeCart() { document.getElementById('cartSidebar').classList.remove('open'); }
+        function openProfile() { document.getElementById('profileModal').style.display = 'flex'; }
+        function closeProfile() { document.getElementById('profileModal').style.display = 'none'; }
+
+        function addToCart() {
+            if (!chosenSize) { alert("يرجى اختيار المقاس لتتمكني من الإضافة للسلة!"); return; }
+            let finalSize = chosenSize + (userMeasurements ? " " + userMeasurements : "");
+            cart.push({ 
+                productId: currentProduct.id,
+                variantColor: selectedVariant.colorName,
+                size: chosenSize,
+                name: currentProduct.name, 
+                price: parseInt(currentProduct.price), 
+                color: selectedVariant.colorName, 
+                sizeFormatted: finalSize, 
+                image: selectedVariant.images[0] 
+            });
+            updateCartUI(); closeModal(); openCart();
+        }
+
+        function removeFromCart(index) { cart.splice(index, 1); updateCartUI(); }
+
+        function updateCartUI() {
+            const badge = document.getElementById('cartBadge');
+            badge.style.display = cart.length > 0 ? 'flex' : 'none';
+            badge.innerText = cart.length;
+
+            const container = document.getElementById('cartItemsContainer'); container.innerHTML = '';
+            const formBlock = document.getElementById('checkoutFormBlock');
+            let total = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#888; margin-top:40px;">السلة فارغة</p>';
+                formBlock.style.display = 'none';
+            } else {
+                cart.forEach((item, index) => {
+                    total += item.price;
+                    container.innerHTML += `<div class="cart-item"><img src="${item.image}"><div class="cart-item-info"><div class="cart-item-name">${item.name}</div><div class="cart-item-details">اللون: ${item.color} | المقاس: ${item.sizeFormatted}</div><div class="cart-item-price">${formatPrice(item.price)}</div><span style="color:#d9381e;cursor:pointer;font-size:0.8em;text-decoration:underline;" onclick="removeFromCart(${index})">حذف</span></div></div>`;
+                });
+                document.getElementById('cartTotalPrice').innerText = formatPrice(total);
+                formBlock.style.display = 'block';
+            }
+        }
+
+        async function processOrder() {
+            const name = document.getElementById('custName').value;
+            const phone = document.getElementById('custPhone').value;
+            const address = document.getElementById('custAddress').value;
+            const btn = document.getElementById('submitOrderBtn');
+            
+            if(!name || !phone || !address) {
+                alert("يرجى تعبئة معلومات التوصيل كاملة.");
+                return;
+            }
+
+            btn.innerText = "جاري تسجيل الطلب وتحديث المخزون...";
+            btn.disabled = true;
+
+            let localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
+            cart.forEach(cartItem => {
+                localProducts.forEach(prod => {
+                    if (prod.id === cartItem.productId) {
+                        prod.variants.forEach(v => {
+                            if (v.colorName === cartItem.variantColor && v.sizesStock && v.sizesStock[cartItem.size]) {
+                                if (v.sizesStock[cartItem.size] > 0) {
+                                    v.sizesStock[cartItem.size] -= 1;
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+            localStorage.setItem('rumman_local_products', JSON.stringify(localProducts));
+
+            let itemsDetails = cart.map(item => `${item.name} (${item.color} - مقاس: ${item.sizeFormatted})`).join(' + ');
+            let total = cart.reduce((sum, item) => sum + item.price, 0);
+
+            const orderData = {
+                name: name,
+                phone: phone,
+                address: address,
+                itemsDetails: itemsDetails,
+                totalPrice: total
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        'action': 'saveOrder',
+                        'data': JSON.stringify(orderData)
+                    })
+                });
+
+                let text = `مرحباً متجر رمان، أود تثبيت الطلبية التالية:\n\n*بيانات العميل:*\nالاسم: ${name}\nالرقم: ${phone}\nالعنوان: ${address}\n\n*تفاصيل الطلب:*\n`;
+                cart.forEach((item, index) => { text += `${index + 1}- ${item.name} | اللون: ${item.color} | المقاس: ${item.sizeFormatted} | السعر: ${formatPrice(item.price)}\n`; });
+                text += `\n*الإجمالي: ${formatPrice(total)}*`;
+
+                cart = []; updateCartUI(); closeCart();
+                document.getElementById('custName').value = "";
+                document.getElementById('custPhone').value = "";
+                document.getElementById('custAddress').value = "";
+
+                window.open(`https://wa.me/963933115644?text=${encodeURIComponent(text)}`, '_blank');
+                fetchProducts();
+            } catch (error) {
+                alert("حدث خطأ أثناء إرسال الطلب ولكن تم تحديث المخزون محلياً.");
+            } finally {
+                btn.innerText = "إرسال الطلب";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

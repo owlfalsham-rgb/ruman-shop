@@ -339,7 +339,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztZ3iHqW4Y35a9PC_lf8PS2Qsao3GOV_QGpgs30nEWxMA2EcjCrGADtlRP47OVT9XEEQ/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0Ikd8V3DrWek-7SSesHbUckMoaQG2ruK0pW5hNBAelhlQY7XZc9qfszrdhN7TQ8eADQ/exec";
         
         let productsData = [];
         let currentProduct = null, selectedVariant = null, chosenSize = "", cart = [];
@@ -419,8 +419,8 @@
             }
         }
 
-        function saveProductLocally() {
-            const editId = document.getElementById('editingProductId').value.trim();
+        // حفظ وحقن المنتج مباشرة في Google Sheets
+        async function saveProductLocally() {
             const name = document.getElementById('adminName').value.trim();
             const price = document.getElementById('adminPrice').value.trim();
             const colorName = document.getElementById('adminColorName').value.trim() || 'أساسي';
@@ -439,111 +439,58 @@
                 return;
             }
 
-            let localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-
-            if (editId) {
-                let prod = localProducts.find(p => p.id === editId);
-                if (prod) {
-                    prod.name = name;
-                    prod.price = price;
-                    prod.variants[0].colorName = colorName;
-                    if (uploadedImagesBase64.length > 0) {
-                        prod.variants[0].images = uploadedImagesBase64;
-                    }
-                    prod.variants[0].sizesStock = sizesStockObj;
-                }
-                alert("تم تحديث المنتج بنجاح!");
-            } else {
-                if (uploadedImagesBase64.length === 0) {
-                    alert("يرجى اختيار صورة واحدة على الأقل للمنتج الجديد!");
-                    return;
-                }
-                const newProd = {
-                    id: 'local_' + Date.now(),
-                    name: name,
-                    price: price,
-                    variants: [
-                        {
-                            colorName: colorName,
-                            colorHex: '#3B4D20',
-                            images: uploadedImagesBase64,
-                            sizesStock: sizesStockObj
-                        }
-                    ]
-                };
-                localProducts.unshift(newProd);
-                alert("تمت إضافة المنتج بنجاح!");
+            if (uploadedImagesBase64.length === 0) {
+                alert("يرجى اختيار صورة واحدة على الأقل للمنتج الجديد!");
+                return;
             }
 
-            localStorage.setItem('rumman_local_products', JSON.stringify(localProducts));
-            resetAdminForm();
-            fetchProducts();
-        }
+            const btn = document.getElementById('saveProductBtn');
+            btn.innerText = "جاري حفظ وحقن المنتج في السحاب...";
+            btn.disabled = true;
 
-        function editLocalProduct(productId, event) {
-            event.stopPropagation();
-            let localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-            let prod = localProducts.find(p => p.id === productId);
-            if (!prod) return;
+            const productData = {
+                name: name,
+                price: price,
+                colorName: colorName,
+                sizesStock: sizesStockObj,
+                images: uploadedImagesBase64
+            };
 
-            document.getElementById('adminPanelTitle').innerText = "تعديل المنتج";
-            document.getElementById('saveProductBtn').innerText = "حفظ التعديلات";
-            document.getElementById('editingProductId').value = prod.id;
-            document.getElementById('adminName').value = prod.name;
-            document.getElementById('adminPrice').value = prod.price;
-            
-            const variant = prod.variants[0];
-            document.getElementById('adminColorName').value = variant.colorName || '';
-            
-            const stock = variant.sizesStock || {};
-            ['S', 'M', 'L', 'XL', 'XXL', 'قياسي'].forEach(sz => {
-                let inputId = sz === 'قياسي' ? 'stock_Free' : `stock_${sz}`;
-                document.getElementById(inputId).value = stock[sz] !== undefined ? stock[sz] : 0;
-            });
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        'action': 'addProduct',
+                        'data': JSON.stringify(productData)
+                    })
+                });
 
-            uploadedImagesBase64 = variant.images || [];
-            const previewRow = document.getElementById('imagesPreviewRow');
-            previewRow.innerHTML = '';
-            uploadedImagesBase64.forEach(imgSrc => {
-                const img = document.createElement('img');
-                img.src = imgSrc; img.className = 'preview-thumb'; img.style.display = 'block';
-                previewRow.appendChild(img);
-            });
-
-            document.getElementById('adminPanel').style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function deleteLocalProduct(productId, event) {
-            event.stopPropagation();
-            if (confirm("هل أنت متأكد من حذف هذه القطعة؟")) {
-                let localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-                localProducts = localProducts.filter(p => p.id !== productId);
-                localStorage.setItem('rumman_local_products', JSON.stringify(localProducts));
-                fetchProducts();
+                const result = await response.json();
+                if (result.success) {
+                    alert("تمت إضافة المنتج وحقنه في جوجل شيت بنجاح لجميع الزبائن! 🌸");
+                    resetAdminForm();
+                    fetchProducts();
+                } else {
+                    alert("حدث خطأ أثناء الحفظ: " + (result.error || "خطأ غير معروف"));
+                }
+            } catch (error) {
+                alert("حدث خطأ في الاتصال بالاتصال بالسيرفر السحابي.");
+            } finally {
+                btn.innerText = "إضافة المنتج إلى المتجر";
+                btn.disabled = false;
             }
         }
 
-        // قراءة المنتجات حصراً من المخزن المحلي أولاً لضمان ظهور الإضافات فوراً
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
-                const localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-                
-                let remoteProducts = [];
-                try {
-                    const response = await fetch(SCRIPT_URL + "?action=getProducts");
-                    remoteProducts = await response.json();
-                } catch (e) {
-                    console.log("الاعتماد على الذاكرة المحلية فقط.");
-                }
-
-                // دمج المنتجات، بحيث يكون العرض المحلي أولاً دائماً
-                productsData = [...localProducts, ...remoteProducts];
+                const response = await fetch(SCRIPT_URL + "?action=getProducts");
+                productsData = await response.json();
                 
                 grid.innerHTML = '';
                 
-                if(productsData.length === 0) {
+                if(!productsData || productsData.length === 0) {
                     grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً. افتح لوحة التحكم لإضافة أول قطعة.</div>';
                     return;
                 }
@@ -552,19 +499,8 @@
                     const card = document.createElement('div'); card.className = 'product-card';
                     card.onclick = () => openProductModal(prod);
                     let dotsHtml = prod.variants.map(v => `<span class="color-dot-preview" style="background-color: ${v.colorHex || '#3B4D20'};"></span>`).join('');
-                    
-                    let actionsHtml = '';
-                    if(isAdminLoggedIn && String(prod.id).startsWith('local_')) {
-                        actionsHtml = `
-                            <div class="card-actions-admin">
-                                <button class="btn-edit-product" onclick="editLocalProduct('${prod.id}', event)">تعديل</button>
-                                <button class="btn-delete-product" onclick="deleteLocalProduct('${prod.id}', event)">حذف</button>
-                            </div>
-                        `;
-                    }
 
-                    card.innerHTML = `${actionsHtml}
-                                        <img src="${prod.variants[0].images[0]}" class="product-image">
+                    card.innerHTML = `<img src="${prod.variants[0].images[0]}" class="product-image">
                                         <div class="product-info-box">
                                             <h3 class="product-name">${prod.name}</h3>
                                             <div class="product-price">${formatPrice(prod.price)}</div>
@@ -573,7 +509,7 @@
                     grid.appendChild(card);
                 });
             } catch (error) {
-                grid.innerHTML = '<div class="loading-text" style="color:red;">حدث خطأ أثناء تحميل المنتجات.</div>';
+                grid.innerHTML = '<div class="loading-text" style="color:red;">حدث خطأ أثناء تحميل المنتجات من السحاب.</div>';
             }
         }
 
@@ -754,24 +690,8 @@
                 return;
             }
 
-            btn.innerText = "جاري تسجيل الطلب وتحديث المخزون...";
+            btn.innerText = "جاري تسجيل الطلب وإرساله...";
             btn.disabled = true;
-
-            let localProducts = JSON.parse(localStorage.getItem('rumman_local_products')) || [];
-            cart.forEach(cartItem => {
-                localProducts.forEach(prod => {
-                    if (prod.id === cartItem.productId) {
-                        prod.variants.forEach(v => {
-                            if (v.colorName === cartItem.variantColor && v.sizesStock && v.sizesStock[cartItem.size]) {
-                                if (v.sizesStock[cartItem.size] > 0) {
-                                    v.sizesStock[cartItem.size] -= 1;
-                                }
-                            }
-                        });
-                    }
-                });
-            });
-            localStorage.setItem('rumman_local_products', JSON.stringify(localProducts));
 
             let itemsDetails = cart.map(item => `${item.name} (${item.color} - مقاس: ${item.sizeFormatted})`).join(' + ');
             let total = cart.reduce((sum, item) => sum + item.price, 0);
@@ -806,7 +726,7 @@
                 window.open(`https://wa.me/963933115644?text=${encodeURIComponent(text)}`, '_blank');
                 fetchProducts();
             } catch (error) {
-                alert("حدث خطأ أثناء إرسال الطلب ولكن تم تحديث المخزون محلياً.");
+                alert("حدث خطأ أثناء إرسال الطلب.");
             } finally {
                 btn.innerText = "إرسال الطلب";
                 btn.disabled = false;

@@ -397,36 +397,10 @@
                     const file = files[i];
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        const img = new Image();
-                        img.onload = function() {
-                            const canvas = document.createElement('canvas');
-                            // السر هنا: تصغير وضغط الصورة تلقائياً ليتعرف عليها جوجل شيتس بدون أخطاء
-                            const MAX_WIDTH = 500;
-                            let width = img.width;
-                            let height = img.height;
-                            
-                            if (width > MAX_WIDTH) {
-                                height = height * (MAX_WIDTH / width);
-                                width = MAX_WIDTH;
-                            }
-                            
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            
-                            // تحويلها لكود Base64 خفيف ومضغوط
-                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                            
-                            uploadedImagesBase64.push(compressedDataUrl);
-                            
-                            const previewImg = document.createElement('img');
-                            previewImg.src = compressedDataUrl; 
-                            previewImg.className = 'preview-thumb'; 
-                            previewImg.style.display = 'block';
-                            previewRow.appendChild(previewImg);
-                        };
-                        img.src = e.target.result;
+                        uploadedImagesBase64.push(e.target.result);
+                        const img = document.createElement('img');
+                        img.src = e.target.result; img.className = 'preview-thumb'; img.style.display = 'block';
+                        previewRow.appendChild(img);
                     }
                     reader.readAsDataURL(file);
                 }
@@ -500,8 +474,7 @@
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
-                // السر الثاني: إضافة توقيت لمنع التخزين المؤقت وتحديث البيانات فوراً
-                const response = await fetch(SCRIPT_URL + "?action=getProducts&t=" + new Date().getTime());
+                const response = await fetch(SCRIPT_URL + "?action=getProducts");
                 productsData = await response.json();
                 
                 grid.innerHTML = '';
@@ -515,9 +488,7 @@
                     const card = document.createElement('div'); card.className = 'product-card';
                     card.onclick = () => openProductModal(prod);
                     
-                    let imageSrc = prod.variants[0] && prod.variants[0].images.length > 0 ? prod.variants[0].images[0] : "";
-                    
-                    card.innerHTML = `<img src="${imageSrc}" class="product-image">
+                    card.innerHTML = `<img src="${prod.variants[0].images[0]}" class="product-image">
                                         <div class="product-info-box">
                                             <h3 class="product-name">${prod.name}</h3>
                                             <div class="product-price">${formatPrice(prod.price)}</div>
@@ -544,7 +515,7 @@
 
             if (slideshowInterval) clearInterval(slideshowInterval);
 
-            if(variant && variant.images && variant.images.length > 0) {
+            if(variant.images && variant.images.length > 0) {
                 mainImg.src = variant.images[0];
                 
                 if(variant.images.length > 1) {
@@ -574,13 +545,11 @@
                         thumbsRow.appendChild(thumb);
                     });
                 }
-            } else {
-                mainImg.src = "";
             }
 
             const sizesContainer = document.getElementById('modalSizes'); sizesContainer.innerHTML = '';
-            let stockMap = (variant && variant.sizesStock) || {};
-            if (Object.keys(stockMap).length === 0 && variant && variant.sizes) {
+            let stockMap = variant.sizesStock || {};
+            if (Object.keys(stockMap).length === 0 && variant.sizes) {
                 variant.sizes.forEach(s => stockMap[s] = 5);
             }
 
@@ -646,23 +615,15 @@
         function addToCart() {
             if (!chosenSize) { alert("يرجى اختيار المقاس لتتمكني من الإضافة للسلة!"); return; }
             let finalSize = chosenSize + (userMeasurements ? " " + userMeasurements : "");
-            
-            let colorName = "أساسي";
-            let imageSrc = "";
-            if(currentProduct.variants && currentProduct.variants.length > 0) {
-                colorName = currentProduct.variants[0].colorName || "أساسي";
-                imageSrc = currentProduct.variants[0].images && currentProduct.variants[0].images.length > 0 ? currentProduct.variants[0].images[0] : "";
-            }
-            
             cart.push({ 
                 productId: currentProduct.id,
-                variantColor: colorName,
+                variantColor: currentProduct.variants[0].colorName || "أساسي",
                 size: chosenSize,
                 name: currentProduct.name, 
                 price: parseInt(currentProduct.price), 
-                color: colorName, 
+                color: currentProduct.variants[0].colorName || "أساسي", 
                 sizeFormatted: finalSize, 
-                image: imageSrc 
+                image: currentProduct.variants[0].images[0] 
             });
             updateCartUI(); closeModal(); openCart();
         }

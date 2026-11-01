@@ -97,9 +97,8 @@
         .product-price { font-size: 0.95em; color: #3B4D20; font-weight: bold; margin-bottom: 8px; }
         @media (min-width: 768px) { .product-price { font-size: 1.05em; } }
         
-        .product-colors { display: flex; justify-content: center; gap: 6px; }
-        .color-dot-preview { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
-
+        /* أزلنا تنسيقات نقاط الألوان بناءً على طلبك */
+        
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.75); z-index: 2000; justify-content: center; align-items: center;
@@ -130,10 +129,6 @@
             text-align: center; cursor: pointer; border: 1px dashed #3B4D20;
         }
         .size-helper-box span { font-size: 0.85em; color: #3B4D20; font-weight: bold; }
-
-        .color-selector { display: flex; gap: 10px; }
-        .color-dot-choice { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid #ccc; }
-        .color-dot-choice.selected { border-color: #1a1a1a; transform: scale(1.1); }
 
         .size-selector { display: flex; flex-wrap: wrap; gap: 8px; }
         .size-btn { background: transparent; border: 1px solid #1a1a1a; padding: 7px 16px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -222,9 +217,10 @@
                 <label>سعر المبيع (ل.س):</label>
                 <input type="number" id="adminPrice" placeholder="مثال: 75000">
             </div>
+            <!-- أبقينا حقل اسم اللون لإضافته في الوصف أو الشيتس إذا لزم الأمر، لكن يمكنك تركه فارغاً -->
             <div class="admin-group">
-                <label>اسم اللون:</label>
-                <input type="text" id="adminColorName" placeholder="مثال: أسود، زيتي، كشمير...">
+                <label>اللون المميز لهذه القطعة:</label>
+                <input type="text" id="adminColorName" placeholder="مثال: أسود، زيتي...">
             </div>
             
             <div class="admin-group" style="grid-column: 1 / -1;">
@@ -266,10 +262,10 @@
                 <div class="modal-price" id="modalPrice">0 ل.س</div>
                 <span class="scarcity-text">🔥 أسرعي، الكمية المتوفرة محدودة جداً!</span>
                 
-                <div class="option-header">
+                <!-- أزلنا قسم اختيار الألوان من النافذة المنبثقة -->
+                <div class="option-header" style="display: none;">
                     <span class="option-label">اللون: <span id="selectedColorName" style="color:#1a1a1a;"></span></span>
                 </div>
-                <div class="color-selector" id="modalColors"></div>
 
                 <div class="option-header">
                     <span class="option-label">المقاس والمخزون: <span id="selectedSizeName" style="color:#1a1a1a;"></span></span>
@@ -337,10 +333,10 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwG0sBKfzFS63q1xXXM2b6mMcFCwC178or3PW7xw9aMDwKC-T29i4TF19B6HRr9bEzWJQ/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxet1pT_Q2dVE6wqWMK8I6RVikeXh7K1zbK-OpuWGMrukaEtZQIkYHD8IiB86UmlG4K/exec";
         
         let productsData = [];
-        let currentProduct = null, selectedVariant = null, chosenSize = "", cart = [];
+        let currentProduct = null, chosenSize = "", cart = [];
         let userMeasurements = "";
         let uploadedImagesBase64 = [];
         let slideshowInterval = null;
@@ -495,13 +491,13 @@
                 productsData.forEach(prod => {
                     const card = document.createElement('div'); card.className = 'product-card';
                     card.onclick = () => openProductModal(prod);
-                    let dotsHtml = prod.variants.map(v => `<span class="color-dot-preview" style="background-color: ${v.colorHex || '#3B4D20'};"></span>`).join('');
+                    
+                    // أزلنا قسم النقاط الملونة (Dots) من بطاقة المنتج
 
                     card.innerHTML = `<img src="${prod.variants[0].images[0]}" class="product-image">
                                         <div class="product-info-box">
                                             <h3 class="product-name">${prod.name}</h3>
                                             <div class="product-price">${formatPrice(prod.price)}</div>
-                                            <div class="product-colors">${dotsHtml}</div>
                                         </div>`;
                     grid.appendChild(card);
                 });
@@ -511,30 +507,14 @@
         }
 
         function openProductModal(prod) {
-            currentProduct = prod; document.getElementById('modalTitle').innerText = prod.name;
+            currentProduct = prod; 
+            document.getElementById('modalTitle').innerText = prod.name;
             document.getElementById('modalPrice').innerText = formatPrice(prod.price);
             userMeasurements = "";
-            
-            const colorsContainer = document.getElementById('modalColors'); colorsContainer.innerHTML = '';
-            prod.variants.forEach((v, index) => {
-                const dot = document.createElement('span'); dot.className = 'color-dot-choice' + (index === 0 ? ' selected' : '');
-                dot.style.backgroundColor = v.colorHex || '#3B4D20'; dot.title = v.colorName;
-                dot.onclick = () => selectColorVariant(v, dot);
-                colorsContainer.appendChild(dot);
-            });
-            if(prod.variants.length > 0) {
-                selectColorVariant(prod.variants[0], colorsContainer.children[0]);
-            }
-            document.getElementById('productModal').style.display = 'flex';
-        }
-
-        function selectColorVariant(variant, dotElement) {
-            selectedVariant = variant; chosenSize = "";
+            chosenSize = "";
             document.getElementById('selectedSizeName').innerText = "";
-            document.getElementById('selectedColorName').innerText = variant.colorName;
-            document.querySelectorAll('.color-dot-choice').forEach(d => d.classList.remove('selected'));
-            if(dotElement) dotElement.classList.add('selected');
-
+            
+            const variant = prod.variants[0]; // نأخذ المتغير الوحيد للقطعة
             const mainImg = document.getElementById('mainDisplayImg'); 
             const thumbsRow = document.getElementById('thumbnailsRow'); 
             thumbsRow.innerHTML = '';
@@ -597,6 +577,8 @@
                 }
                 sizesContainer.appendChild(btn);
             });
+
+            document.getElementById('productModal').style.display = 'flex';
         }
 
         function openSizeHelper() {
@@ -641,13 +623,13 @@
             let finalSize = chosenSize + (userMeasurements ? " " + userMeasurements : "");
             cart.push({ 
                 productId: currentProduct.id,
-                variantColor: selectedVariant.colorName,
+                variantColor: currentProduct.variants[0].colorName || "أساسي",
                 size: chosenSize,
                 name: currentProduct.name, 
                 price: parseInt(currentProduct.price), 
-                color: selectedVariant.colorName, 
+                color: currentProduct.variants[0].colorName || "أساسي", 
                 sizeFormatted: finalSize, 
-                image: selectedVariant.images[0] 
+                image: currentProduct.variants[0].images[0] 
             });
             updateCartUI(); closeModal(); openCart();
         }

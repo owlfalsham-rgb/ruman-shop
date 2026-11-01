@@ -97,8 +97,6 @@
         .product-price { font-size: 0.95em; color: #3B4D20; font-weight: bold; margin-bottom: 8px; }
         @media (min-width: 768px) { .product-price { font-size: 1.05em; } }
         
-        /* أزلنا تنسيقات نقاط الألوان بناءً على طلبك */
-        
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.75); z-index: 2000; justify-content: center; align-items: center;
@@ -217,7 +215,6 @@
                 <label>سعر المبيع (ل.س):</label>
                 <input type="number" id="adminPrice" placeholder="مثال: 75000">
             </div>
-            <!-- أبقينا حقل اسم اللون لإضافته في الوصف أو الشيتس إذا لزم الأمر، لكن يمكنك تركه فارغاً -->
             <div class="admin-group">
                 <label>اللون المميز لهذه القطعة:</label>
                 <input type="text" id="adminColorName" placeholder="مثال: أسود، زيتي...">
@@ -262,7 +259,6 @@
                 <div class="modal-price" id="modalPrice">0 ل.س</div>
                 <span class="scarcity-text">🔥 أسرعي، الكمية المتوفرة محدودة جداً!</span>
                 
-                <!-- أزلنا قسم اختيار الألوان من النافذة المنبثقة -->
                 <div class="option-header" style="display: none;">
                     <span class="option-label">اللون: <span id="selectedColorName" style="color:#1a1a1a;"></span></span>
                 </div>
@@ -401,10 +397,36 @@
                     const file = files[i];
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        uploadedImagesBase64.push(e.target.result);
-                        const img = document.createElement('img');
-                        img.src = e.target.result; img.className = 'preview-thumb'; img.style.display = 'block';
-                        previewRow.appendChild(img);
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            // السر هنا: تصغير وضغط الصورة تلقائياً ليتعرف عليها جوجل شيتس بدون أخطاء
+                            const MAX_WIDTH = 500;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > MAX_WIDTH) {
+                                height = height * (MAX_WIDTH / width);
+                                width = MAX_WIDTH;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // تحويلها لكود Base64 خفيف ومضغوط
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                            
+                            uploadedImagesBase64.push(compressedDataUrl);
+                            
+                            const previewImg = document.createElement('img');
+                            previewImg.src = compressedDataUrl; 
+                            previewImg.className = 'preview-thumb'; 
+                            previewImg.style.display = 'block';
+                            previewRow.appendChild(previewImg);
+                        };
+                        img.src = e.target.result;
                     }
                     reader.readAsDataURL(file);
                 }
@@ -478,7 +500,8 @@
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
             try {
-                const response = await fetch(SCRIPT_URL + "?action=getProducts");
+                // السر الثاني: إضافة توقيت لمنع التخزين المؤقت وتحديث البيانات فوراً
+                const response = await fetch(SCRIPT_URL + "?action=getProducts&t=" + new Date().getTime());
                 productsData = await response.json();
                 
                 grid.innerHTML = '';
@@ -492,9 +515,9 @@
                     const card = document.createElement('div'); card.className = 'product-card';
                     card.onclick = () => openProductModal(prod);
                     
-                    // أزلنا قسم النقاط الملونة (Dots) من بطاقة المنتج
-
-                    card.innerHTML = `<img src="${prod.variants[0].images[0]}" class="product-image">
+                    let imageSrc = prod.variants[0] && prod.variants[0].images.length > 0 ? prod.variants[0].images[0] : "";
+                    
+                    card.innerHTML = `<img src="${imageSrc}" class="product-image">
                                         <div class="product-info-box">
                                             <h3 class="product-name">${prod.name}</h3>
                                             <div class="product-price">${formatPrice(prod.price)}</div>
@@ -514,14 +537,14 @@
             chosenSize = "";
             document.getElementById('selectedSizeName').innerText = "";
             
-            const variant = prod.variants[0]; // نأخذ المتغير الوحيد للقطعة
+            const variant = prod.variants[0]; 
             const mainImg = document.getElementById('mainDisplayImg'); 
             const thumbsRow = document.getElementById('thumbnailsRow'); 
             thumbsRow.innerHTML = '';
 
             if (slideshowInterval) clearInterval(slideshowInterval);
 
-            if(variant.images && variant.images.length > 0) {
+            if(variant && variant.images && variant.images.length > 0) {
                 mainImg.src = variant.images[0];
                 
                 if(variant.images.length > 1) {
@@ -551,11 +574,13 @@
                         thumbsRow.appendChild(thumb);
                     });
                 }
+            } else {
+                mainImg.src = "";
             }
 
             const sizesContainer = document.getElementById('modalSizes'); sizesContainer.innerHTML = '';
-            let stockMap = variant.sizesStock || {};
-            if (Object.keys(stockMap).length === 0 && variant.sizes) {
+            let stockMap = (variant && variant.sizesStock) || {};
+            if (Object.keys(stockMap).length === 0 && variant && variant.sizes) {
                 variant.sizes.forEach(s => stockMap[s] = 5);
             }
 
@@ -621,15 +646,23 @@
         function addToCart() {
             if (!chosenSize) { alert("يرجى اختيار المقاس لتتمكني من الإضافة للسلة!"); return; }
             let finalSize = chosenSize + (userMeasurements ? " " + userMeasurements : "");
+            
+            let colorName = "أساسي";
+            let imageSrc = "";
+            if(currentProduct.variants && currentProduct.variants.length > 0) {
+                colorName = currentProduct.variants[0].colorName || "أساسي";
+                imageSrc = currentProduct.variants[0].images && currentProduct.variants[0].images.length > 0 ? currentProduct.variants[0].images[0] : "";
+            }
+            
             cart.push({ 
                 productId: currentProduct.id,
-                variantColor: currentProduct.variants[0].colorName || "أساسي",
+                variantColor: colorName,
                 size: chosenSize,
                 name: currentProduct.name, 
                 price: parseInt(currentProduct.price), 
-                color: currentProduct.variants[0].colorName || "أساسي", 
+                color: colorName, 
                 sizeFormatted: finalSize, 
-                image: currentProduct.variants[0].images[0] 
+                image: imageSrc 
             });
             updateCartUI(); closeModal(); openCart();
         }

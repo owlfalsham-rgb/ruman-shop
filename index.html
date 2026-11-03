@@ -330,12 +330,13 @@
 
     <script>
         // تم تحديث رابط الويب أب الجديد والخاص برفع الصور إلى Google Drive تلقائياً
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbEpcdt7XTdBtS7ENNk_zBEGcM6qPxiXHe4NsRpt7akaiPfQWfBNuYNB1SwumntgV4Hw/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiJwXMspbBERnKZKZq8CcqMZ1WtXA1d-1TygABtpS4Rf4Cqd5IzqxxguOj4HaLn4pvxQ/exec";
         
         let productsData = [];
         let currentProduct = null, chosenSize = "", cart = [];
         let userMeasurements = "";
         let uploadedImagesBase64 = [];
+        let imagesReadPromise = Promise.resolve([]);
         let slideshowInterval = null;
         let isAdminLoggedIn = false;
 
@@ -380,6 +381,7 @@
             document.getElementById('adminImageFiles').value = "";
             document.getElementById('imagesPreviewRow').innerHTML = "";
             uploadedImagesBase64 = [];
+            imagesReadPromise = Promise.resolve([]);
             ['S', 'M', 'L', 'XL', 'XXL', 'Free'].forEach(sz => {
                 let id = sz === 'Free' ? 'stock_Free' : `stock_${sz}`;
                 document.getElementById(id).value = sz === 'XXL' || sz === 'Free' ? 0 : 5;
@@ -389,28 +391,94 @@
         function handleImageUpload() {
             const fileInput = document.getElementById('adminImageFiles');
             const previewRow = document.getElementById('imagesPreviewRow');
-            previewRow.innerHTML = ''; 
-            
-            const files = fileInput.files;
-            if (files && files.length > 0) {
-                uploadedImagesBase64 = [];
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        uploadedImagesBase64.push(e.target.result);
-                        const previewImg = document.createElement('img');
-                        previewImg.src = e.target.result; 
-                        previewImg.className = 'preview-thumb'; 
-                        previewImg.style.display = 'block';
-                        previewRow.appendChild(previewImg);
-                    }
-                    reader.readAsDataURL(file);
-                }
+            const files = Array.from(fileInput.files || []);
+
+            previewRow.innerHTML = '';
+            uploadedImagesBase64 = [];
+            imagesReadPromise = Promise.resolve([]);
+
+            if (files.length === 0) return;
+
+            if (files.length > 4) {
+                alert('يمكن اختيار أربع صور كحد أقصى لكل منتج.');
+                fileInput.value = '';
+                return;
             }
+
+            // ضغط الصور داخل المتصفح لتقليل حجم الإرسال إلى Apps Script.
+            const readAndCompressImage = (file) => new Promise((resolve, reject) => {
+                if (!file.type || !file.type.startsWith('image/')) {
+                    reject(new Error('أحد الملفات المختارة ليس صورة.'));
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('تعذرت قراءة الملف: ' + file.name));
+                reader.onload = () => {
+                    const sourceImage = new Image();
+                    sourceImage.onerror = () => reject(new Error('الصورة تالفة أو غير قابلة للقراءة: ' + file.name));
+                    sourceImage.onload = () => {
+                        const maxSide = 1600;
+                        const scale = Math.min(1, maxSide / Math.max(sourceImage.width, sourceImage.height));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(sourceImage.width * scale));
+                        canvas.height = Math.max(1, Math.round(sourceImage.height * scale));
+
+                        const context = canvas.getContext('2d');
+                        if (!context) {
+                            reject(new Error('تعذر تجهيز الصورة: ' + file.name));
+                            return;
+                        }
+
+                        context.fillStyle = '#ffffff';
+                        context.fillRect(0, 0, canvas.width, canvas.height);
+                        context.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                        if (dataUrl.length > 7 * 1024 * 1024) {
+                            reject(new Error('حجم الصورة بعد الضغط ما زال كبيراً: ' + file.name));
+                            return;
+                        }
+                        resolve(dataUrl);
+                    };
+                    sourceImage.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            imagesReadPromise = Promise.all(files.map(readAndCompressImage));
+
+            imagesReadPromise.then(images => {
+                uploadedImagesBase64 = images;
+                previewRow.innerHTML = '';
+                images.forEach((src, index) => {
+                    const previewImg = document.createElement('img');
+                    previewImg.src = src;
+                    previewImg.alt = 'معاينة الصورة ' + (index + 1);
+                    previewImg.className = 'preview-thumb';
+                    previewImg.style.display = 'block';
+                    previewRow.appendChild(previewImg);
+                });
+            }).catch(error => {
+                uploadedImagesBase64 = [];
+                imagesReadPromise = Promise.resolve([]);
+                fileInput.value = '';
+                previewRow.innerHTML = '';
+                alert(error.message || 'حدث خطأ أثناء تجهيز الصور.');
+            });
         }
 
         async function saveProductLocally() {
+            const btn = document.getElementById('saveProductBtn');
+            if (btn.disabled) return;
+
+            try {
+                await imagesReadPromise;
+            } catch (imageError) {
+                alert(imageError.message || 'تعذر تجهيز الصور.');
+                return;
+            }
+
             const name = document.getElementById('adminName').value.trim();
             const wholesalePrice = document.getElementById('adminWholesalePrice').value.trim();
             const price = document.getElementById('adminPrice').value.trim();
@@ -420,7 +488,7 @@
             ['S', 'M', 'L', 'XL', 'XXL', 'قياسي'].forEach(sz => {
                 let inputId = sz === 'قياسي' ? 'stock_Free' : `stock_${sz}`;
                 let qty = parseInt(document.getElementById(inputId).value);
-                if (!isNaN(qty) && qty > 0) {
+                if (!isNaN(qty) && qty >= 0) {
                     sizesStockObj[sz] = qty;
                 }
             });
@@ -435,15 +503,16 @@
                 return;
             }
 
-            const btn = document.getElementById('saveProductBtn');
             btn.innerText = "جاري رفع الصور إلى Google Drive وحفظ المنتج...";
             btn.disabled = true;
 
             const productData = {
                 name: name,
                 wholesalePrice: wholesalePrice,
+                costPrice: wholesalePrice,
                 price: price,
                 colorName: colorName,
+                colorHex: '#3B4D20',
                 sizesStock: sizesStockObj,
                 images: uploadedImagesBase64
             };
@@ -451,7 +520,7 @@
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
                     body: new URLSearchParams({
                         'action': 'addProduct',
                         'data': JSON.stringify(productData)
@@ -476,32 +545,82 @@
 
         async function fetchProducts() {
             const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '<div class="loading-text">جاري تحميل أحدث التشكيلات التركية...</div>';
+
             try {
-                const response = await fetch(SCRIPT_URL + "?action=getProducts&t=" + new Date().getTime());
-                productsData = await response.json();
-                
+                const response = await fetch(SCRIPT_URL + '?t=' + Date.now(), {
+                    method: 'GET',
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error(data && data.error ? data.error : 'صيغة بيانات المنتجات غير صحيحة');
+                }
+
+                productsData = data;
                 grid.innerHTML = '';
-                
-                if(!productsData || productsData.length === 0) {
+
+                if (productsData.length === 0) {
                     grid.innerHTML = '<div class="loading-text">لا توجد منتجات حالياً. افتح لوحة التحكم لإضافة أول قطعة.</div>';
                     return;
                 }
 
                 productsData.forEach(prod => {
-                    const card = document.createElement('div'); card.className = 'product-card';
-                    card.onclick = () => openProductModal(prod);
-                    
-                    let imageSrc = prod.variants[0] && prod.variants[0].images.length > 0 ? prod.variants[0].images[0] : "";
-                    
-                    card.innerHTML = `<img src="${imageSrc}" class="product-image">
-                                        <div class="product-info-box">
-                                            <h3 class="product-name">${prod.name}</h3>
-                                            <div class="product-price">${formatPrice(prod.price)}</div>
-                                        </div>`;
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.addEventListener('click', () => openProductModal(prod));
+
+                    const firstVariant = Array.isArray(prod.variants) ? prod.variants[0] : null;
+                    const imageSrc = firstVariant && Array.isArray(firstVariant.images)
+                        ? firstVariant.images[0]
+                        : '';
+
+                    if (imageSrc) {
+                        const image = document.createElement('img');
+                        image.src = imageSrc;
+                        image.alt = prod.name || 'صورة المنتج';
+                        image.className = 'product-image';
+                        image.loading = 'lazy';
+                        image.onerror = () => {
+                            image.removeAttribute('src');
+                            image.alt = 'تعذر تحميل صورة المنتج';
+                            image.style.objectFit = 'contain';
+                        };
+                        card.appendChild(image);
+                    } else {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'product-image';
+                        placeholder.style.display = 'flex';
+                        placeholder.style.alignItems = 'center';
+                        placeholder.style.justifyContent = 'center';
+                        placeholder.textContent = 'الصورة غير متوفرة';
+                        card.appendChild(placeholder);
+                    }
+
+                    const info = document.createElement('div');
+                    info.className = 'product-info-box';
+
+                    const title = document.createElement('h3');
+                    title.className = 'product-name';
+                    title.textContent = prod.name || '';
+
+                    const price = document.createElement('div');
+                    price.className = 'product-price';
+                    price.textContent = formatPrice(prod.price || 0);
+
+                    info.appendChild(title);
+                    info.appendChild(price);
+                    card.appendChild(info);
                     grid.appendChild(card);
                 });
             } catch (error) {
-                grid.innerHTML = '<div class="loading-text" style="color:red;">حدث خطأ أثناء تحميل المنتجات من السحاب.</div>';
+                console.error('fetchProducts error:', error);
+                grid.innerHTML = '<div class="loading-text" style="color:red;">تعذر تحميل المنتجات. تأكد من نشر تطبيق Google Apps Script وإتاحة الوصول إليه.</div>';
             }
         }
 
@@ -514,13 +633,15 @@
             document.getElementById('selectedSizeName').innerText = "";
             
             const variant = prod.variants[0]; 
-            const mainImg = document.getElementById('mainDisplayImg'); 
+            const mainImg = document.getElementById('mainDisplayImg');
+            mainImg.alt = prod.name || 'صورة المنتج';
             const thumbsRow = document.getElementById('thumbnailsRow'); 
             thumbsRow.innerHTML = '';
 
             if (slideshowInterval) clearInterval(slideshowInterval);
 
-            if(variant && variant.images && variant.images.length > 0) {
+            mainImg.removeAttribute('src');
+            if(variant && Array.isArray(variant.images) && variant.images.length > 0) {
                 mainImg.src = variant.images[0];
                 
                 if(variant.images.length > 1) {
@@ -553,7 +674,8 @@
             }
 
             const sizesContainer = document.getElementById('modalSizes'); sizesContainer.innerHTML = '';
-            let stockMap = (variant && variant.sizesStock) || {};
+            let stockMap = (variant && variant.sizesStock && typeof variant.sizesStock === 'object')
+                ? variant.sizesStock : {};
             if (Object.keys(stockMap).length === 0 && variant && variant.sizes) {
                 variant.sizes.forEach(s => stockMap[s] = 5);
             }
@@ -691,14 +813,23 @@
             };
 
             try {
-                await fetch(SCRIPT_URL, {
+                const orderResponse = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
                     body: new URLSearchParams({
                         'action': 'saveOrder',
                         'data': JSON.stringify(orderData)
                     })
                 });
+
+                if (!orderResponse.ok) {
+                    throw new Error('تعذر الاتصال بخدمة تسجيل الطلبات');
+                }
+
+                const orderResult = await orderResponse.json();
+                if (!orderResult || !orderResult.success) {
+                    throw new Error(orderResult && orderResult.error ? orderResult.error : 'لم يتم حفظ الطلب');
+                }
 
                 let text = `مرحباً متجر رمان، أود تثبيت الطلبية التالية:\n\n*بيانات العميل:*\nالاسم: ${name}\nالرقم: ${phone}\nالعنوان: ${address}\n\n*تفاصيل الطلب:*\n`;
                 cart.forEach((item, index) => { text += `${index + 1}- ${item.name} | اللون: ${item.color} | المقاس: ${item.sizeFormatted} | السعر: ${formatPrice(item.price)}\n`; });
